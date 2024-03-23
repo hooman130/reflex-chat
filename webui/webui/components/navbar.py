@@ -1,5 +1,7 @@
+from turtle import width
 import reflex as rx
 from webui.state import State
+
 
 def sidebar_chat(chat: str) -> rx.Component:
     """A sidebar chat item.
@@ -7,22 +9,27 @@ def sidebar_chat(chat: str) -> rx.Component:
     Args:
         chat: The chat item.
     """
-    return  rx.drawer.close(rx.hstack(
-        rx.button(
-            chat, on_click=lambda: State.set_chat(chat), width="80%", variant="surface"
-        ),
-        rx.button(
-            rx.icon(
-                tag="trash",
-                on_click=State.delete_chat,
-                stroke_width=1,
+    return rx.drawer.close(
+        rx.hstack(
+            rx.button(
+                chat,
+                on_click=lambda: State.set_chat(chat),
+                width="80%",
+                variant="surface",
             ),
-            width="20%",
-            variant="surface",
-            color_scheme="red",
-        ),
-        width="100%",
-    ))
+            rx.button(
+                rx.icon(
+                    tag="trash",
+                    on_click=State.delete_chat,
+                    stroke_width=1,
+                ),
+                width="20%",
+                variant="surface",
+                color_scheme="red",
+            ),
+            width="100%",
+        )
+    )
 
 
 def sidebar(trigger) -> rx.Component:
@@ -77,6 +84,57 @@ def modal(trigger) -> rx.Component:
     )
 
 
+def sliderbar(trigger) -> rx.Component:
+    """The sliderbar component."""
+    return rx.drawer.root(
+        rx.drawer.trigger(trigger),
+        rx.drawer.overlay(),
+        rx.drawer.portal(
+            rx.drawer.content(
+                rx.vstack(
+                    rx.heading("Model Parameters", color=rx.color("mauve", 11)),
+                    rx.divider(),
+                    # model selection
+                    rx.form.root(
+                        rx.vstack(
+                            rx.text("Model"),
+                            rx.select(
+                                ["gpt-4-turbo-preview", "gpt-3.5-turbo", "gpt-4"],
+                                value=State.model,
+                                on_change=State.handle_model_change,
+                            ),
+                            # Temperature Slider
+                            rx.text("Temperature"),
+                            rx.slider(
+                                value=[State.model_params["temperature"]],
+                                name="temperature",
+                                min=0,
+                                max=1,
+                                step=0.01,
+                            ),
+                            rx.button("Submit", type="submit"),
+                            width="100%",
+                        ),
+                        on_submit=State.update_model_params,
+                        reset_on_submit=True,
+                    ),
+                    align_items="stretch",
+                    width="100%",
+                ),
+                top="auto",
+                left="auto",
+                height="100%",
+                width="20em",
+                padding="2em",
+                background_color=rx.color("mauve", 2),
+                outline="none",
+                # visible=State.drawer_open,
+            )
+        ),
+        direction="right",
+    )
+
+
 def navbar():
     return rx.box(
         rx.hstack(
@@ -85,9 +143,12 @@ def navbar():
                 rx.heading("Reflex Chat"),
                 rx.desktop_only(
                     rx.badge(
-                    State.current_chat,
-                    rx.tooltip(rx.icon("info", size=14), content="The current selected chat."),
-                    variant="soft"
+                        State.current_chat,
+                        rx.tooltip(
+                            rx.icon("info", size=14),
+                            content="The current selected chat.",
+                        ),
+                        variant="soft",
                     )
                 ),
                 align_items="center",
@@ -104,12 +165,14 @@ def navbar():
                     )
                 ),
                 rx.desktop_only(
-                    rx.button(
-                        rx.icon(
-                            tag="sliders-horizontal",
-                            color=rx.color("mauve", 12),
-                        ),
-                        background_color=rx.color("mauve", 6),
+                    sliderbar(
+                        rx.button(
+                            rx.icon(
+                                tag="sliders-horizontal",
+                                color=rx.color("mauve", 12),
+                            ),
+                            background_color=rx.color("mauve", 6),
+                        )
                     )
                 ),
                 align_items="center",

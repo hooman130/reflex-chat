@@ -1,7 +1,10 @@
 import os
 import reflex as rx
 from openai import OpenAI
+from dotenv import load_dotenv
 
+
+load_dotenv()
 _client = None
 
 
@@ -33,6 +36,13 @@ DEFAULT_CHATS = {
 class State(rx.State):
     """The app state."""
 
+    model: str = "gpt-3.5-turbo"
+    model_params = {
+        "temperature": 0.6,
+        "max_tokens": 1000,
+    }
+
+    drawer_open: bool = False
     # A dict from the chat name to the list of questions and answers.
     chats: dict[str, list[QA]] = DEFAULT_CHATS
 
@@ -47,6 +57,25 @@ class State(rx.State):
 
     # The name of the new chat.
     new_chat_name: str = ""
+
+    def open_drawer(self):
+        self.drawer_open = True
+
+    def close_drawer(self):
+        self.drawer_open = False
+
+    def handle_model_change(self, new_model):
+        # Update the model in the state
+        self.model = new_model
+
+    def update_model_params(self, form_data: dict):
+        """Update the model parameters."""
+        self.model_params.update(
+            {
+                "temperature": float(form_data["temperature"]),
+            }
+        )
+        # self.close_drawer()  # Close the drawer
 
     def create_chat(self):
         """Create a new chat."""
@@ -122,9 +151,7 @@ class State(rx.State):
 
         # Start a new session to answer the question.
         session = get_openai_client().chat.completions.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
-            messages=messages,
-            stream=True,
+            model=self.model, messages=messages, stream=True, **self.model_params
         )
 
         # Stream the results, yielding after every word.
