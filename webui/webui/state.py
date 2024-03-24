@@ -26,6 +26,7 @@ class QA(rx.Base):
 
     question: str
     answer: str
+    model: str
 
 
 DEFAULT_CHATS = {
@@ -42,7 +43,6 @@ class State(rx.State):
         "max_tokens": 1000,
     }
 
-    drawer_open: bool = False
     # A dict from the chat name to the list of questions and answers.
     chats: dict[str, list[QA]] = DEFAULT_CHATS
 
@@ -58,23 +58,14 @@ class State(rx.State):
     # The name of the new chat.
     new_chat_name: str = ""
 
-    def open_drawer(self):
-        self.drawer_open = True
-
-    def close_drawer(self):
-        self.drawer_open = False
-
     def handle_model_change(self, new_model):
         # Update the model in the state
         self.model = new_model
 
-    def update_model_params(self, form_data: dict):
+    def update_model_params(self, name: str, value: list[float]):
         """Update the model parameters."""
-        self.model_params.update(
-            {
-                "temperature": float(form_data["temperature"]),
-            }
-        )
+        print(name, value[0])
+        self.model_params[name] = value[0]
         # self.close_drawer()  # Close the drawer
 
     def create_chat(self):
@@ -128,7 +119,7 @@ class State(rx.State):
         """
 
         # Add the question to the list of questions.
-        qa = QA(question=question, answer="")
+        qa = QA(question=question, answer="", model=self.model)
         self.chats[self.current_chat].append(qa)
 
         # Clear the input and start the processing.
@@ -154,6 +145,8 @@ class State(rx.State):
             model=self.model, messages=messages, stream=True, **self.model_params
         )
 
+        print("model ", self.model, "was used")
+
         # Stream the results, yielding after every word.
         for item in session:
             if hasattr(item.choices[0].delta, "content"):
@@ -171,3 +164,9 @@ class State(rx.State):
 
         # Toggle the processing flag.
         self.processing = False
+
+    def set_clipboard(self, text: str):
+        """Set the clipboard text."""
+        import pyperclip
+
+        pyperclip.copy(text)

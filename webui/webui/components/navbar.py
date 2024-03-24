@@ -95,31 +95,42 @@ def sliderbar(trigger) -> rx.Component:
                     rx.heading("Model Parameters", color=rx.color("mauve", 11)),
                     rx.divider(),
                     # model selection
-                    rx.form.root(
-                        rx.vstack(
-                            rx.text("Model"),
-                            rx.select(
-                                ["gpt-4-turbo-preview", "gpt-3.5-turbo", "gpt-4"],
-                                value=State.model,
-                                on_change=State.handle_model_change,
-                            ),
-                            # Temperature Slider
-                            rx.text("Temperature"),
-                            rx.slider(
-                                value=[State.model_params["temperature"]],
-                                name="temperature",
-                                min=0,
-                                max=1,
-                                step=0.01,
-                            ),
-                            rx.button("Submit", type="submit"),
-                            width="100%",
+                    rx.vstack(
+                        rx.text("Model"),
+                        rx.select(
+                            ["gpt-4-turbo-preview", "gpt-3.5-turbo", "gpt-4"],
+                            value=State.model,
+                            on_change=State.handle_model_change,
                         ),
-                        on_submit=State.update_model_params,
-                        reset_on_submit=True,
+                        # Temperature Slider
+                        rx.text("Temperature"),
+                        rx.slider(
+                            value=[State.model_params["temperature"]],
+                            name="temperature",
+                            min=0,
+                            max=1,
+                            step=0.01,
+                            on_change=lambda value: State.update_model_params(
+                                "temperature",
+                                value,
+                            ),
+                        ),
+                        # Max_Tokens Slider
+                        rx.text("Max Tokens"),
+                        rx.slider(
+                            value=[State.model_params["max_tokens"]],
+                            name="max_tokens",
+                            min=100,
+                            max=4000,
+                            step=10,
+                            on_change=lambda value: State.update_model_params(
+                                "max_tokens",
+                                value,
+                            ),
+                        ),
+                        align_items="stretch",
+                        width="100%",
                     ),
-                    align_items="stretch",
-                    width="100%",
                 ),
                 top="auto",
                 left="auto",
