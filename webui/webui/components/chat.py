@@ -6,6 +6,11 @@ from webui.state import (
     State,
 )  # Importing QA class and State for managing application state
 
+# Define a consistent color palette
+PRIMARY_COLOR = "#3b82f6"
+SECONDARY_COLOR = "#64b5f6"
+ACCENT_COLOR = "#e57373"
+
 # Style dictionary for message components
 message_style = dict(
     display="inline-block",  # Ensuring messages are inline and block-level elements
@@ -35,12 +40,14 @@ def message(qa: QA) -> rx.Component:
     question_box = rx.radix.box(
         rx.hstack(
             rx.radix.text(
-                qa.question,  # Displaying the question text
-                background_color=rx.color(
-                    "mauve", 4
-                ),  # Setting a light mauve background for the question
-                color=rx.color("mauve", 12),  # Dark mauve text color for contrast
-                **message_style,  # Applying the predefined style
+                qa.question,
+                background_color=PRIMARY_COLOR,
+                color="white",
+                **message_style,
+                transition="background-color 0.2s ease-in-out",
+                on_hover={
+                    "background-color": SECONDARY_COLOR,
+                },
             ),
             rx.icon_button(
                 "copy",
@@ -101,6 +108,7 @@ def chat() -> rx.Component:
         rx.radix.box(
             rx.foreach(State.chats[State.current_chat], message),
             width="100%",  # Iterating over chat messages
+            overflow_y="auto",  # Enable infinite scrolling
         ),
         py="8",  # Vertical padding
         flex="1",  # Flex grow to fill available space

@@ -39,29 +39,35 @@ def sidebar() -> rx.Component:
 
     # Assuming rx.Drawer and related components as constructs in Reflex for drawer functionality
     # This is a placeholder code and needs to be confirmed and possibly adjusted per Reflex documentation
-    return rx.Drawer(
-        rx.DrawerOverlay(
-            rx.DrawerContent(
-                rx.DrawerHeader(
-                    rx.HStack(
-                        rx.Text("Chats"),
-                        # Placeholder for an icon within a drawer header
-                        rx.Icon(
-                            tag="close",
-                            on_click=State.toggle_drawer,
-                            style=styles.icon_style,
-                        ),
-                    )
-                ),
-                rx.DrawerBody(
-                    rx.VStack(
-                        # Assuming rx.foreach is a way to render iterable components in Reflex
-                        rx.foreach(State.chat_titles, lambda chat: sidebar_chat(chat)),
-                        align_items="stretch",
-                    )
+    return rx.VStack(
+        rx.Drawer(
+            rx.DrawerOverlay(
+                rx.DrawerContent(
+                    rx.DrawerHeader(
+                        rx.HStack(
+                            rx.Text("Chats"),
+                            # Placeholder for an icon within a drawer header
+                            rx.Icon(
+                                tag="close",
+                                on_click=State.toggle_drawer,
+                                style=styles.icon_style,
+                            ),
+                        )
+                    ),
+                    rx.DrawerBody(
+                        rx.VStack(
+                            # Assuming rx.foreach is a way to render iterable components in Reflex
+                            rx.foreach(
+                                State.chat_titles, lambda chat: sidebar_chat(chat)
+                            ),
+                            align_items="stretch",
+                        )
+                    ),
                 ),
             ),
+            placement="left",
+            is_open=State.drawer_open,
         ),
-        placement="left",
-        is_open=State.drawer_open,
+        height="80vh",  # Reduce sidebar height
+        spacing="10px",  # Reduce spacing
     )
