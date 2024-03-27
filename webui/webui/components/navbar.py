@@ -1,4 +1,3 @@
-from turtle import width
 import reflex as rx
 from webui.state import State
 
@@ -98,12 +97,13 @@ def sliderbar(trigger) -> rx.Component:
                     rx.vstack(
                         rx.text("Model"),
                         rx.select(
-                            ["gpt-4-turbo-preview", "gpt-3.5-turbo", "gpt-4"],
+                            State.models_list,
                             value=State.model,
                             on_change=State.handle_model_change,
                         ),
                         # Temperature Slider
                         rx.text("Temperature"),
+                        rx.heading(State.model_params["temperature"], size="1"),
                         rx.slider(
                             value=[State.model_params["temperature"]],
                             name="temperature",
@@ -117,6 +117,7 @@ def sliderbar(trigger) -> rx.Component:
                         ),
                         # Max_Tokens Slider
                         rx.text("Max Tokens"),
+                        rx.heading(State.model_params["max_tokens"], size="1"),
                         rx.slider(
                             value=[State.model_params["max_tokens"]],
                             name="max_tokens",

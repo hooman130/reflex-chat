@@ -34,9 +34,18 @@ DEFAULT_CHATS = {
 }
 
 
+def get_models_list():
+    """Get the list of models."""
+    models = get_openai_client().models.list()
+    models = [model.id for model in models if model.id.startswith("gpt")]
+    models = sorted(models, reverse=True)
+    return models
+
+
 class State(rx.State):
     """The app state."""
 
+    models_list: list[str] = get_models_list()
     model: str = "gpt-3.5-turbo"
     model_params = {
         "temperature": 0.6,
@@ -117,7 +126,6 @@ class State(rx.State):
         Args:
             form_data: A dict with the current question.
         """
-
         # Add the question to the list of questions.
         qa = QA(question=question, answer="", model=self.model)
         self.chats[self.current_chat].append(qa)

@@ -10,16 +10,19 @@ def sidebar_chat(chat: str) -> rx.Component:
     Args:
         chat: The chat item.
     """
-    return rx.chakra.hstack(
-        rx.chakra.box(
+    # Assuming rx.Box and rx.HStack are similar constructs from Reflex for layout
+    # Assuming rx.Icon is a way to include icons, which needs to be confirmed with Reflex documentation
+    return rx.HStack(
+        rx.Box(
             chat,
             on_click=lambda: State.set_chat(chat),
             style=styles.sidebar_style,
             color=styles.icon_color,
             flex="1",
         ),
-        rx.chakra.box(
-            rx.chakra.icon(
+        rx.Box(
+            # Placeholder for adding an icon with an on_click event in Reflex
+            rx.Icon(
                 tag="delete",
                 style=styles.icon_style,
                 on_click=State.delete_chat,
@@ -33,21 +36,26 @@ def sidebar_chat(chat: str) -> rx.Component:
 
 def sidebar() -> rx.Component:
     """The sidebar component."""
-    return rx.chakra.drawer(
-        rx.chakra.drawer_overlay(
-            rx.chakra.drawer_content(
-                rx.chakra.drawer_header(
-                    rx.chakra.hstack(
-                        rx.chakra.text("Chats"),
-                        rx.chakra.icon(
+
+    # Assuming rx.Drawer and related components as constructs in Reflex for drawer functionality
+    # This is a placeholder code and needs to be confirmed and possibly adjusted per Reflex documentation
+    return rx.Drawer(
+        rx.DrawerOverlay(
+            rx.DrawerContent(
+                rx.DrawerHeader(
+                    rx.HStack(
+                        rx.Text("Chats"),
+                        # Placeholder for an icon within a drawer header
+                        rx.Icon(
                             tag="close",
                             on_click=State.toggle_drawer,
                             style=styles.icon_style,
                         ),
                     )
                 ),
-                rx.chakra.drawer_body(
-                    rx.chakra.vstack(
+                rx.DrawerBody(
+                    rx.VStack(
+                        # Assuming rx.foreach is a way to render iterable components in Reflex
                         rx.foreach(State.chat_titles, lambda chat: sidebar_chat(chat)),
                         align_items="stretch",
                     )

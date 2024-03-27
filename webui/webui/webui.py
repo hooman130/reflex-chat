@@ -12,7 +12,7 @@ def index() -> rx.Component:
     It includes the navbar, chat window, and action bar with specific styling.
     """
     # Creating a vertical stack layout with navbar, chat window, and action bar
-    return rx.chakra.vstack(
+    return rx.vstack(
         navbar(),  # Adds the navigation bar at the top
         chat.chat(),  # Adds the main chat window
         chat.action_bar(),  # Adds the chat action bar at the bottom
@@ -24,11 +24,14 @@ def index() -> rx.Component:
     )
 
 
-# Initialize the app with a dark theme and a violet accent color
+# Initialize the app with a theme and accent color
 app = rx.App(
     theme=rx.theme(
-        appearance="dark",  # Sets the theme appearance to dark
-        accent_color="violet",  # Sets the accent color to violet
+        appearance="dark",  # Adjust appearance to 'dark' as originally intended
+        has_background=True,
+        radius="large",
+        accent_color="violet",  # Setting the accent color to 'violet' as in the original attempt
     ),
 )
-app.add_page(index)  # Adds the main page to the app
+
+app.add_page(index)
