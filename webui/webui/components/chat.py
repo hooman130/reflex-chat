@@ -106,7 +106,12 @@ def chat() -> rx.Component:
     # Creating a vertical stack of message components for each chat
     return rx.radix.vstack(
         rx.radix.box(
-            rx.foreach(State.chats[State.current_chat], message),
+            messages=rx.virtualized_list(
+                State.chats[State.current_chat],
+                key="message",
+                item_size=50,  # Adjust item size as needed
+                render_item=message,
+            ),
             width="100%",  # Iterating over chat messages
             overflow_y="auto",  # Enable infinite scrolling
         ),

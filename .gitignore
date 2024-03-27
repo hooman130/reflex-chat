@@ -15,4 +15,3 @@ backend.zip
 dist/*
 venv/
 .env
-docs/*
