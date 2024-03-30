@@ -1,192 +1,133 @@
-import reflex as rx  # Importing the reflex library for UI components
+import reflex as rx
+from webui.components import loading_icon
+from webui.state import QA, State
 
-from webui.components import loading_icon  # Importing a loading icon component
-from webui.state import (
-    QA,
-    State,
-)  # Importing QA class and State for managing application state
-
-# Define a consistent color palette
 PRIMARY_COLOR = "#3b82f6"
 SECONDARY_COLOR = "#64b5f6"
-ACCENT_COLOR = "#e57373"
+ACCENT_COLOR = "#ffbaba"
 
-# Style dictionary for message components
-message_style = dict(
-    display="inline-block",  # Ensuring messages are inline and block-level elements
-    padding="1em",  # Adding padding around the text for better readability
-    border_radius="8px",  # Rounding the corners for a softer look
-    max_width=[
-        "30em",
-        "30em",
-        "50em",
-        "50em",
-        "50em",
-        "50em",
-    ],  # Responsive max-width settings
-)
+message_style = {
+    "padding": "1em",
+    "border_radius": "8px",
+    "max_width": "100%",
+    "@media (min-width: 768px)": {"max_width": "50em"},
+    "display": "flex",
+    "flex_direction": "column",
+}
 
 
-def message(qa: QA) -> rx.Component:
-    """A single question/answer message with a copy icon.
-
-    Args:
-        qa: The question/answer pair.
-
-    Returns:
-        A component displaying the question/answer pair with a copy icon.
-    """
-    # Creating a box component for the question part with a copy icon on the right
-    question_box = rx.radix.box(
-        rx.hstack(
-            rx.radix.text(
-                qa.question,
-                background_color=PRIMARY_COLOR,
-                color="white",
-                **message_style,
-                transition="background-color 0.2s ease-in-out",
-                on_hover={
-                    "background-color": SECONDARY_COLOR,
-                },
-            ),
-            rx.icon_button(
-                "copy",
-                size="1",
-                on_click=rx.set_clipboard(qa.question),
-                tooltip="Copy question",
-            ),  # Adding a copy button
-            spacing="1",
-        ),
-        text_align="right",  # Aligning the question to the right
-        margin_top="1em",  # Adding a top margin for spacing between messages
-        justify_content="flex-end",  # Ensuring the content is aligned to the right
+def create_message_box(
+    text, background_color, text_color, align="left", hover_color=None
+):
+    style = {**message_style, "background_color": background_color, "color": text_color}
+    if hover_color:
+        style["transition"] = "background-color 0.2s ease-in-out"
+        style["on_hover"] = {"background-color": hover_color}
+    return rx.box(
+        rx.text(text, **style),
+        text_align=align,
+        justify_content="flex-end" if align == "right" else "flex-start",
     )
-    # Creating a box component for the answer part with a copy icon on the left
-    answer_box = rx.radix.box(
-        rx.hstack(
-            rx.icon_button(
-                "copy",
-                size="1",
-                on_click=rx.set_clipboard(qa.answer),
-                tooltip="Copy answer",
-            ),  # Adding a copy button
-            rx.markdown(
-                qa.answer,  # Displaying the answer text
-                background_color=rx.color(
-                    "accent", 4
-                ),  # Setting a light accent color background for the answer
-                color=rx.color("accent", 12),  # Dark accent text color for readability
-                **message_style,  # Applying the predefined style
-            ),
-            spacing="1",
-        ),
-        text_align="left",  # Aligning the answer to the left
-        padding_top="1em",  # Adding top padding for spacing within the answer box
+
+
+def create_copy_button(content, tooltip):
+    return rx.icon_button(
+        "copy",
+        size="1",
+        on_click=lambda: State.set_clipboard(content),
+        tooltip=tooltip,
+        aria_label=tooltip,
     )
-    # Combining question and answer boxes into a single component, with conditional alignment
-    return rx.radix.box(
-        rx.radix.box(
-            question_box,
-            width="100%",
-            display="flex",
-            justify_content="flex-end",  # Aligning question box to the right
-        ),
-        rx.radix.box(
-            answer_box,
-            width="100%",
-            display="flex",
-            justify_content="flex-start",  # Aligning answer box to the left
-        ),
-        direction="column",  # Stacking question and answer vertically
+
+
+def create_delete_button(chat_name, index):
+    return rx.icon(
+        "trash-2",
+        size=15,
+        color="red",
+        on_click=lambda: State.delete_message(chat_name, index),
+        style={"cursor": "pointer"},
     )
+
+
+def message(qa: QA, index: int, chat_name: str) -> rx.Component:
+    question_box = create_message_box(
+        qa.question, PRIMARY_COLOR, "white", align="right", hover_color=SECONDARY_COLOR
+    )
+    answer_box = create_message_box(
+        qa.answer, rx.color("accent", 4), rx.color("accent", 12), align="left"
+    )
+    question_box.children.extend(
+        [
+            create_copy_button(qa.question, "Copy question"),
+            create_delete_button(chat_name, index),
+        ]
+    )
+    answer_box.children.append(create_copy_button(qa.answer, "Copy answer"))
+    return rx.vstack(question_box, answer_box, direction="column")
 
 
 def chat() -> rx.Component:
-    """List all the messages in a single conversation."""
-    # Creating a vertical stack of message components for each chat
-    return rx.radix.vstack(
-        rx.radix.box(
-            messages=rx.virtualized_list(
+    return rx.vstack(
+        rx.box(
+            rx.foreach(
                 State.chats[State.current_chat],
-                key="message",
-                item_size=50,  # Adjust item size as needed
-                render_item=message,
+                lambda qa, index: message(qa, index, State.current_chat),
             ),
-            width="100%",  # Iterating over chat messages
-            overflow_y="auto",  # Enable infinite scrolling
+            width="100%",
+            overflow_y="auto",
         ),
-        py="8",  # Vertical padding
-        flex="1",  # Flex grow to fill available space
-        width="100%",  # Full width
-        max_width="60em",  # Maximum width for better readability on large screens
-        padding_x="4px",  # Horizontal padding for slight spacing
-        align_self="center",  # Centering the chat vertically
-        overflow="hidden",  # Hiding overflow
-        padding_bottom="5em",  # Bottom padding to avoid overlap with the action bar
+        py="8",
+        flex="1",
+        width="100%",
+        max_width="60em",
+        padding_x="4px",
+        align_self="center",
+        overflow="hidden",
+        padding_bottom="5em",
     )
 
 
 def action_bar() -> rx.Component:
-    """The action bar to send a new message."""
-    # Creating a form for sending new messages
+    send_button_text = rx.cond(State.streaming, rx.text("Stop"), rx.text("Send"))
+    send_button_action = rx.cond(
+        State.streaming, lambda: State.stop_streaming(), State.process_question
+    )
+
     form = rx.chakra.form(
         rx.chakra.form_control(
             rx.hstack(
-                rx.radix.text_field.root(
-                    rx.radix.text_field.input(
-                        placeholder="Type something...",  # Placeholder text
-                        id="question",  # Input field ID
-                        width=[
-                            "15em",
-                            "20em",
-                            "30em",
-                            "30em",
-                            "30em",
-                            "30em",
-                        ],  # Responsive width settings
-                    ),
-                    rx.radix.text_field.slot(
-                        rx.tooltip(
-                            rx.icon("info", size=18),  # Info icon for tooltip
-                            content="Enter a question to get a response.",  # Tooltip text
-                        )
-                    ),
+                rx.text_area(
+                    # Existing attributes...
                 ),
                 rx.button(
-                    rx.cond(
-                        State.processing,  # Conditional rendering based on processing state
-                        loading_icon(height="1em"),  # Show loading icon if processing
-                        rx.text("Send"),  # Show "Send" text if not processing
-                    ),
-                    type="submit",  # Button type for form submission
+                    send_button_text,
+                    type="submit" if not State.streaming else "button",
+                    on_click=send_button_action if State.streaming else None,
                 ),
-                align_items="center",  # Aligning items in the horizontal stack
+                # Existing attributes...
             ),
-            is_disabled=State.processing,  # Disabling form control while processing
+            is_disabled=State.processing,
         ),
-        on_submit=State.process_question,  # Handling form submission
-        reset_on_submit=True,  # Resetting form after submission
+        on_submit=State.process_question if not State.streaming else None,
+        reset_on_submit=True,
     )
-    # Adding a disclaimer text below the form
     disclaimer_text = rx.text(
         "ReflexGPT may return factually incorrect or misleading responses. Use discretion.",
-        text_align="center",  # Centering the text
-        font_size=".75em",  # Smaller font size for the disclaimer
-        color=rx.color("mauve", 10),  # Setting the text color
+        text_align="center",
+        font_size=".75em",
+        color=rx.color("mauve", 10),
     )
-    # Combining form and disclaimer into a vertical stack and making it sticky at the bottom
     return rx.center(
-        rx.vstack(
-            form, disclaimer_text, align_items="center"
-        ),  # Vertical stack of form and disclaimer
-        position="sticky",  # Making the action bar sticky
-        bottom="0",  # Positioning at the bottom
-        left="0",  # Aligning to the left
-        padding_y="16px",  # Vertical padding
-        backdrop_filter="auto",  # Enabling backdrop filter
-        backdrop_blur="lg",  # Applying a large blur effect
-        border_top=f"1px solid {rx.color('mauve', 3)}",  # Top border for separation
-        background_color=rx.color("mauve", 2),  # Background color
-        align_items="stretch",  # Stretching items to fill the available space
-        width="100%",  # Full width
+        rx.vstack(form, disclaimer_text, align_items="center"),
+        position="sticky",
+        bottom="0",
+        left="0",
+        padding_y="16px",
+        backdrop_filter="auto",
+        backdrop_blur="lg",
+        border_top=f"1px solid {rx.color('mauve', 3)}",
+        background_color=rx.color("mauve", 2),
+        align_items="stretch",
+        width="100%",
     )
