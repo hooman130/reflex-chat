@@ -89,6 +89,49 @@ def modal(trigger) -> rx.Component:
     )
 
 
+def create_filebar_content() -> rx.Component:
+    """Function to create content for the filebar drawer for knowledge base management."""
+    color = "rgb(107,99,246)"
+    upload = rx.upload(
+        rx.vstack(
+            rx.button(
+                "Select File", color=color, bg="white", border=f"1px solid {color}"
+            ),
+            rx.text("Drag and drop files here or click to select files"),
+        ),
+        id="upload1",
+        multiple=True,
+        border=f"1px dotted {color}",
+        padding="5em",
+    )
+
+    upload_button = rx.button(
+        "Upload",
+        on_click=State.handle_upload(
+            rx.upload_files(
+                upload_id="upload1", on_upload_progress=State.handle_upload_progress
+            )
+        ),
+        style={"margin-bottom": "1rem"},
+    )
+
+    # knowledge_base_list = rx.foreach(
+    #    State.knowledge_bases,  # Placeholder for a state variable listing knowledge bases
+    #    lambda kb: rx.text(kb, padding="0.5rem"),
+    # )
+
+    return rx.vstack(
+        rx.heading("Knowledge Base", color=rx.color("mauve", 11)),
+        rx.divider(),
+        upload,
+        upload_button,
+        rx.heading("Uploaded Folders:", color=rx.color("mauve", 10), size="2"),
+        # knowledge_base_list,
+        align_items="stretch",
+        width="100%",
+    )
+
+
 def create_sliderbar_content():
     """Separate function for sliderbar content creation for better readability."""
     return rx.vstack(
@@ -96,7 +139,9 @@ def create_sliderbar_content():
         rx.divider(),
         rx.text("Model"),
         rx.select(
-            State.models_list, value=State.model, on_change=State.handle_model_change
+            State.models_list,
+            value=State.model,
+            on_change=State.handle_model_change,
         ),
         create_model_param_slider("Temperature", "temperature", 0, 1, 0.01),
         create_model_param_slider("Max Tokens", "max_tokens", 100, 4000, 10),
@@ -109,7 +154,7 @@ def create_model_param_slider(label, param_name, min_val, max_val, step):
     """Helper function to create a slider for model parameters."""
     return rx.vstack(
         rx.text(label),
-        rx.heading(str(State.model_params[param_name]), size="1"),
+        rx.heading(State.model_params[param_name], size="1"),
         rx.slider(
             value=[State.model_params[param_name]],
             name=param_name,
@@ -142,6 +187,27 @@ def sliderbar(trigger) -> rx.Component:
     )
 
 
+def filebar(trigger) -> rx.Component:
+    """The sliderbar component with refactored content creation."""
+    return rx.drawer.root(
+        rx.drawer.trigger(trigger),
+        rx.drawer.overlay(),
+        rx.drawer.portal(
+            rx.drawer.content(
+                create_filebar_content(),
+                top="auto",
+                left="auto",
+                height="100%",
+                width="20em",
+                padding="2em",
+                background_color=rx.color("mauve", 2),
+                outline="none",
+            )
+        ),
+        direction="right",
+    )
+
+
 @rx.memo
 def navbar():
     """Refactored navbar with minor adjustments for consistency."""
@@ -158,13 +224,16 @@ def navbar():
             padding="12px",
             border_bottom=f"1px solid {rx.color('mauve', 3)}",
             background_color=rx.color("mauve", 2),
-            position="sticky",
+            position="fixed",  # Changed from 'sticky' to 'fixed'
             top="0",
+            left="0",
+            right="0",  # Ensure it spans the full width
             z_index="100",
             align_items="center",
         ),
         height="50px",
         spacing="9",
+        width="100%",  # Ensure full width
     )
 
 
@@ -190,6 +259,12 @@ def create_navbar_right_section():
     """Helper function to create the right section of the navbar."""
     return rx.hstack(
         modal(rx.button("+ New chat")),
+        filebar(
+            rx.button(
+                rx.icon(tag="book_text", color=rx.color("mauve", 12)),
+                background_color=rx.color("mauve", 6),
+            )
+        ),
         sidebar(
             rx.button(
                 rx.icon(tag="messages-square", color=rx.color("mauve", 12)),

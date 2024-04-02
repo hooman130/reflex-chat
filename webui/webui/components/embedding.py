@@ -30,43 +30,44 @@ def generate_query_prompt(client, chat_history, user_question):
     """
     prompt = (
         "Given the following conversation history and the latest question, "
-        "generate a search query for an embedding index to find relevant extra information "
-        "required to answer the user's question:\n\n"
+        "generate a search query for faiss flat index to find relevant documents"
+        "required to answer the user's question you don't know about, usually techincal:\n\n"
         "Conversation History:\n"
         f"{chat_history}\n\n"
         "Latest Question:\n"
         f"{user_question}\n\n"
         "Search Query:"
     )
-
+    prompt = [{"role": "user", "content": prompt}]
     try:
-        response = client.completions.create(
-            model="gpt-3.5-turbo-instruct",
-            prompt=prompt,
-            max_tokens=100,
+        response = client.chat.completions.create(
+            model="gpt-4-turbo-preview",
+            messages=prompt,
+            max_tokens=1000,
             temperature=0.3,
-            stop=["\n"],
         )
 
-        return response.choices[0].text.strip()
+        print(response.choices[0])
+
+        return response.choices[0].message.content
     except Exception as e:
         print(e)
         return ""
 
 
 def retrieve_relevant_content(
-    user_query, embedding_path, k=5, model_name="All-MiniLM-L6-v2"
+    user_query, embedding_path, doc_name, k=5, model_name="All-MiniLM-L6-v2"
 ):
     model = SentenceTransformer(model_name)
-    related_docs = search_index(user_query, model, embedding_path, k)
+    related_docs = search_index(user_query, model, embedding_path, doc_name, k)
     related_docs = ". ".join(related_docs)
     return related_docs
 
 
-def search_index(query, model, embedding_path, k=5):
+def search_index(query, model, embedding_path, doc_name, k=5):
     # Load the index and documents
-    index = faiss.read_index("faiss_index.index")
-    with open(os.path.join(embedding_path, "reflex.json"), "r") as f:
+    index = faiss.read_index(f"{doc_name}_index.index")
+    with open(os.path.join(embedding_path, f"{doc_name}.json"), "r") as f:
         documents = json.load(f)
 
     # Convert query to embedding
@@ -77,13 +78,13 @@ def search_index(query, model, embedding_path, k=5):
     return [documents[i] for i in indices[0]]
 
 
-def create_faiss_index(embeddings_path):
+def create_faiss_index(embeddings_path, doc_name):
     embeddings = np.load(embeddings_path)
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
 
     index.add(embeddings)
-    faiss.write_index(index, "faiss_index.index")
+    faiss.write_index(index, f"{doc_name}_index.index")
 
 
 def preprocess_text(text):
@@ -102,7 +103,12 @@ def read_and_preprocess(folder_path):
     documents = []
     for root, dirs, files in os.walk(folder_path):
         for file in files:
-            if file.endswith(".md"):
+            if (
+                file.endswith(".md")
+                or file.endswith(".mdx")
+                or file.endswith(".txt")
+                or file.endswith(".json")
+            ):
                 file_path = os.path.join(root, file)
                 with open(file_path, "r", encoding="utf-8") as f:
                     text = f.read()
@@ -118,8 +124,10 @@ def embed_documents(folder_path, model):
 
 
 # Embed documents and save embeddings along with their corresponding texts for later retrieval
-def save_embeddings_and_texts(folder_path, save_path, model):
+def save_embeddings_and_texts(folder_path, save_path, doc_name, model):
     documents, embeddings = embed_documents(folder_path, model)
-    np.save(os.path.join(save_path, "reflex.npy"), embeddings)
-    with open(os.path.join(save_path, "reflex.json"), "w") as f:
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    np.save(os.path.join(save_path, f"{doc_name}.npy"), embeddings)
+    with open(os.path.join(save_path, f"{doc_name}.json"), "w") as f:
         json.dump(documents, f)

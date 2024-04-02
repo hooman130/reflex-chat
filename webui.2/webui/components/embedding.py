@@ -43,7 +43,7 @@ def generate_query_prompt(client, chat_history, user_question):
         response = client.completions.create(
             model="gpt-3.5-turbo-instruct",
             prompt=prompt,
-            max_tokens=100,
+            max_tokens=3200,
             temperature=0.3,
             stop=["\n"],
         )

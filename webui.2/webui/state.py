@@ -4,7 +4,6 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import pyperclip
 from webui.components import embedding
-
 from sentence_transformers import SentenceTransformer
 
 load_dotenv()

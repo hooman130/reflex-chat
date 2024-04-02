@@ -7,20 +7,17 @@ from webui.components import chat, navbar
 
 # Define the main page layout and components
 def index() -> rx.Component:
-    """
-    This function defines the main page layout using a vertical stack layout.
-    It includes the navbar, chat window, and action bar with specific styling.
-    """
-    # Creating a vertical stack layout with navbar, chat window, and action bar
+    # Adjust the layout to accommodate the fixed navbar
     return rx.vstack(
-        navbar(),  # Adds the navigation bar at the top
-        chat.chat(),  # Adds the main chat window
-        chat.action_bar(),  # Adds the chat action bar at the bottom
-        background_color=rx.color("mauve", 1),  # Sets the background color
-        color=rx.color("mauve", 12),  # Sets the text color
-        min_height="100vh",  # Ensures the layout fills the whole viewport height
-        align_items="stretch",  # Stretches items to fill the container
-        spacing="0",  # Sets the spacing between items to 0
+        navbar(),  # Navbar remains here but won't take up space in the flow
+        chat.chat(),
+        chat.action_bar(),
+        padding_top="50px",  # Add padding at the top equal to the navbar's height
+        background_color=rx.color("mauve", 1),
+        color=rx.color("mauve", 12),
+        min_height="100vh",
+        align_items="stretch",
+        spacing="0",
     )
 
 
