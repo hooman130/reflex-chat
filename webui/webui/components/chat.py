@@ -141,7 +141,7 @@ def action_bar() -> rx.Component:
     form = rx.form(
         rx.hstack(
             rx.text_area(  # Corrected from rx.text_field.root to rx.input
-                placeholder="Type something...",  # Placeholder text
+                placeholder="Type something..",  # Placeholder text
                 id="question",  # Input field ID
                 required=True,
                 width=[

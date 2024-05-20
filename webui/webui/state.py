@@ -4,11 +4,18 @@ import reflex as rx
 from openai import OpenAI
 from dotenv import load_dotenv
 import pyperclip
-from webui.components import embedding
-from sentence_transformers import SentenceTransformer
+from webui.components import embedding_v2
 
 load_dotenv()
 _client = None
+
+
+def get_models():
+    """Get the list of models."""
+    models = get_openai_client().models.list()
+    models = [model.id for model in models if model.id.startswith("gpt")]
+    models = sorted(models, reverse=True)
+    return models
 
 
 def get_openai_client():
@@ -17,6 +24,13 @@ def get_openai_client():
         _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     return _client
+
+
+def get_files_list():
+    """Get the list of files in the folder."""
+    files = os.listdir("./uploaded_files")
+    files = [file for file in files]
+    return files
 
 
 # Checking if the API key is set properly
@@ -40,7 +54,7 @@ DEFAULT_CHATS = {
 class State(rx.State):
     """The app state."""
 
-    models_list: list[str] = ["model1", "model2", "model3"]
+    models_list: list[str] = get_models()
     model: str = "gpt-4-turbo-preview"
     model_params = {
         "temperature": 0.2,
@@ -49,7 +63,7 @@ class State(rx.State):
 
     embedding_model: str = "all-MiniLM-L6-v2"
     doc_name: str = "reflex"
-    use_embedding: bool = False
+    use_embedding: bool = True
     # A dict from the chat name to the list of questions and answers.
     chats: dict[str, list[QA]] = DEFAULT_CHATS
 
@@ -66,7 +80,7 @@ class State(rx.State):
     # The name of the new chat.
     new_chat_name: str = ""
 
-    knowledge_bases: list[str] = ["doc1", "doc2"]
+    knowledge_bases: list[str] = get_files_list()
     uploading: bool = False
     progress: int = 0
 
@@ -79,9 +93,11 @@ class State(rx.State):
             with outfile.open("wb") as file_object:
                 file_object.write(upload_data)
 
+            self.knowledge_bases.append(file.filename)
+
         print("Trigger folder upload")
 
-    def handle_upload_progress(self, progress: dict):
+    async def handle_upload_progress(self, progress: dict):
         self.uploading = True
         self.progress = round(progress["progress"] * 100)
         if self.progress >= 100:
@@ -119,12 +135,6 @@ class State(rx.State):
         # print(name, value[0])
         self.model_params[name] = value[0]
         # self.close_drawer()  # Close the drawer
-
-    def init_models(self):
-        """Get the list of models."""
-        models = get_openai_client().models.list()
-        models = [model.id for model in models if model.id.startswith("gpt")]
-        self.models = sorted(models, reverse=True)
 
     def create_chat(self):
         """Create a new chat."""
@@ -196,11 +206,11 @@ class State(rx.State):
         ]
 
         if self.use_embedding:
-            query_prompt = embedding.generate_query_prompt(
+            query_prompt = embedding_v2.generate_query_prompt(
                 get_openai_client(), self.chats[self.current_chat], question
             )
             print("query_prompt", query_prompt)
-            related_docs = embedding.retrieve_relevant_content(
+            related_docs = embedding_v2.retrieve_relevant_content(
                 query_prompt,
                 doc_name=self.doc_name,
                 k=5,

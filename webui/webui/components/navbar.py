@@ -91,49 +91,59 @@ def modal(trigger) -> rx.Component:
 
 def create_filebar_content() -> rx.Component:
     """Function to create content for the filebar drawer for knowledge base management."""
-    color = "rgb(107,99,246)"
-    upload = rx.upload(
-        rx.vstack(
-            rx.button(
-                "Select File", color=color, bg="white", border=f"1px solid {color}"
-            ),
+    color = "rgb(98, 90, 246)"
+    upload = rx.vstack(
+        rx.upload(
             rx.text("Drag and drop files here or click to select files"),
+            id="upload1",
+            multiple=True,
         ),
-        id="upload1",
-        multiple=True,
+        rx.vstack(rx.foreach(rx.selected_files("upload1"), rx.text)),
+        rx.cond(
+            State.uploading,
+            rx.button("Uploading...", disabled=True),
+            rx.button(
+                "Upload",
+                on_click=State.handle_upload(
+                    rx.upload_files(
+                        upload_id="upload1",
+                        on_upload_progress=State.handle_upload_progress,
+                    )
+                ),
+                style={"margin-bottom": "1rem"},
+            ),
+        ),
         border=f"1px dotted {color}",
-        padding="5em",
+        padding="2em",
     )
 
-    upload_button = rx.button(
-        "Upload",
-        on_click=State.handle_upload(
-            rx.upload_files(
-                upload_id="upload1", on_upload_progress=State.handle_upload_progress
-            )
+    knowledge_base_list = rx.box(
+        rx.foreach(
+            State.knowledge_bases,  # Placeholder for a state variable listing knowledge bases
+            lambda kb: rx.text(kb, padding="0.5rem"),
         ),
-        style={"margin-bottom": "1rem"},
+        style={"overflow-y": "auto", "max-height": "20em"},
+        align="stretch",
+        width="100%",
+        height="100%",
+        background_color=rx.color("sky", 3),
     )
-
-    # knowledge_base_list = rx.foreach(
-    #    State.knowledge_bases,  # Placeholder for a state variable listing knowledge bases
-    #    lambda kb: rx.text(kb, padding="0.5rem"),
-    # )
 
     return rx.vstack(
         rx.heading("Knowledge Base", color=rx.color("mauve", 11)),
         rx.divider(),
         upload,
-        upload_button,
-        rx.heading("Uploaded Folders:", color=rx.color("mauve", 10), size="2"),
-        # knowledge_base_list,
-        align_items="stretch",
+        rx.progress(value=State.progress, max=100),
+        rx.divider(),
+        rx.heading("Current Files:", color=rx.color("mauve", 10), size="1"),
+        knowledge_base_list,
         width="100%",
     )
 
 
 def create_sliderbar_content():
     """Separate function for sliderbar content creation for better readability."""
+
     return rx.vstack(
         rx.heading("Model Parameters", color=rx.color("mauve", 11)),
         rx.divider(),
@@ -208,7 +218,7 @@ def filebar(trigger) -> rx.Component:
     )
 
 
-@rx.memo
+# @rx.memo
 def navbar():
     """Refactored navbar with minor adjustments for consistency."""
     return rx.hstack(
