@@ -1,28 +1,71 @@
 import reflex as rx
 from chat.state import State
 
+
 def sidebar_chat(chat: str) -> rx.Component:
     """A sidebar chat item.
 
     Args:
         chat: The chat item.
     """
-    return  rx.drawer.close(rx.hstack(
-        rx.button(
-            chat, on_click=lambda: State.set_chat(chat), width="80%", variant="surface"
-        ),
-        rx.button(
-            rx.icon(
-                tag="trash",
-                on_click=State.delete_chat,
-                stroke_width=1,
+    return rx.drawer.close(
+        rx.hstack(
+            rx.button(
+                chat,
+                on_click=lambda: State.set_chat(chat),
+                width="80%",
+                variant="surface",
             ),
-            width="20%",
-            variant="surface",
-            color_scheme="red",
+            rx.button(
+                rx.icon(
+                    tag="trash",
+                    on_click=State.delete_chat,
+                    stroke_width=1,
+                ),
+                width="20%",
+                variant="surface",
+                color_scheme="red",
+            ),
+            width="100%",
+        )
+    )
+
+
+def settings_sidebar():
+    return rx.drawer(
+        rx.drawer_overlay(
+            rx.drawer_content(
+                rx.drawer_close_button(),
+                rx.drawer_header(rx.heading("Settings")),
+                rx.drawer_body(
+                    rx.vstack(
+                        rx.hstack(
+                            rx.text("Model:"),
+                            rx.select(
+                                options=["gpt-4o", "gpt-3.5", "o1-preview"],
+                                value=State.model_name,
+                                on_change=State.set_model_name,
+                            ),
+                        ),
+                        rx.hstack(
+                            rx.text("Temperature: "),
+                            rx.slider(
+                                value=State.temperature,
+                                on_change_end=State.set_temperature,
+                                min_=0.0,
+                                max_=1.0,
+                                step=0.1,
+                            ),
+                            rx.text(State.temperature),
+                        ),
+                    )
+                ),
+            )
         ),
-        width="100%",
-    ))
+        placement="right",
+        is_open=State.show_settings_sidebar,
+        on_close=State.close_settings_sidebar,
+    )
 
 
 def sidebar(trigger) -> rx.Component:
@@ -85,9 +128,12 @@ def navbar():
                 rx.heading("Reflex Chat"),
                 rx.desktop_only(
                     rx.badge(
-                    State.current_chat,
-                    rx.tooltip(rx.icon("info", size=14), content="The current selected chat."),
-                    variant="soft"
+                        State.current_chat,
+                        rx.tooltip(
+                            rx.icon("info", size=14),
+                            content="The current selected chat.",
+                        ),
+                        variant="soft",
                     )
                 ),
                 align_items="center",
@@ -110,6 +156,7 @@ def navbar():
                             color=rx.color("mauve", 12),
                         ),
                         background_color=rx.color("mauve", 6),
+                        on_click=State.toggle_settings_sidebar,
                     )
                 ),
                 align_items="center",

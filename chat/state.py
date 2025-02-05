@@ -38,6 +38,10 @@ class State(rx.State):
     # The name of the new chat.
     new_chat_name: str = ""
 
+    settings_sidebar_open: bool = False
+    model_name: str = "gpt-3.5-turbo"
+    temperature: float = 0.5
+
     def create_chat(self):
         """Create a new chat."""
         # Add the new chat to the list of chats.
@@ -58,6 +62,18 @@ class State(rx.State):
             chat_name: The name of the chat.
         """
         self.current_chat = chat_name
+
+    def toggle_settings_sidebar(self):
+        """Toggle the settings sidebar."""
+        self.settings_sidebar_open = not self.settings_sidebar_open
+
+    def set_model_name(self, name: str):
+        """Set the model name."""
+        self.model_name = name
+
+    def set_temperature(self, value: float):
+        """Set the temperature."""
+        self.temperature = value
 
     @rx.var(cache=True)
     def chat_titles(self) -> list[str]:

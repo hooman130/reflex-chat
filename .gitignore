@@ -20,3 +20,4 @@ frontend.zip
 poetry.lock
 venv/
 .env
+reflex-chat/
